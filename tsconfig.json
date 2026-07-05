@@ -14,7 +14,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
-    "moduleResolution": "node",
+    "moduleResolution": "node10",
 
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
