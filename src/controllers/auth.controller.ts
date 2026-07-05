@@ -26,17 +26,7 @@ export const authController = {
     sendSuccess(res, result, 'Registration successful. Please verify your email.', 201);
   }),
 
-   registerStart: asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, role } = req.body;
-
-  const result = await authService.registerStart(
-    email,
-    password,
-    role
-  );
-
-  sendSuccess(res, result, "OTP sent successfully");
-}),
+   
 
 
   verifyEmail: asyncHandler(async (req: Request, res: Response) => {
@@ -44,26 +34,6 @@ export const authController = {
     const result = await authService.verifyEmail(email, otp);
     sendSuccess(res, result, 'Email verified successfully');
   }),
-
-  completeProfile: asyncHandler(async (req: Request, res: Response) => {
-  const {
-    email,
-    fullName,
-    companyName,
-    phone,
-    address,
-  } = req.body;
-
-  const result = await authService.completeProfile({
-    email,
-    fullName,
-    companyName,
-    phone,
-    address,
-  });
-
-  sendSuccess(res, result, "Registration completed successfully");
-}),
 
   resendOtp: asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;

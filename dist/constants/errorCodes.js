@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ErrorCode = void 0;
+var ErrorCode;
+(function (ErrorCode) {
+    ErrorCode["VALIDATION_ERROR"] = "VALIDATION_ERROR";
+    ErrorCode["UNAUTHORIZED"] = "UNAUTHORIZED";
+    ErrorCode["FORBIDDEN"] = "FORBIDDEN";
+    ErrorCode["NOT_FOUND"] = "NOT_FOUND";
+    ErrorCode["CONFLICT"] = "CONFLICT";
+    ErrorCode["INVALID_CREDENTIALS"] = "INVALID_CREDENTIALS";
+    ErrorCode["EMAIL_NOT_VERIFIED"] = "EMAIL_NOT_VERIFIED";
+    ErrorCode["TOKEN_EXPIRED"] = "TOKEN_EXPIRED";
+    ErrorCode["TOKEN_INVALID"] = "TOKEN_INVALID";
+    ErrorCode["OTP_INVALID"] = "OTP_INVALID";
+    ErrorCode["OTP_EXPIRED"] = "OTP_EXPIRED";
+    ErrorCode["RATE_LIMITED"] = "RATE_LIMITED";
+    ErrorCode["INTERNAL_ERROR"] = "INTERNAL_ERROR";
+    ErrorCode["FILE_TOO_LARGE"] = "FILE_TOO_LARGE";
+    ErrorCode["UNSUPPORTED_FILE_TYPE"] = "UNSUPPORTED_FILE_TYPE";
+})(ErrorCode || (exports.ErrorCode = ErrorCode = {}));
