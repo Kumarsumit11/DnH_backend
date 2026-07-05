@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                      String                   @id @default(uuid())
+  email                   String                   @unique
+  passwordHash            String
+  role                    Role
+  status                  AccountStatus            @default(PENDING_VERIFICATION)
+  phone                   String?
+  isEmailVerified         Boolean                  @default(false)
+  supabaseUserId          String?                  @unique
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  activityLogs            ActivityLog[]
+  associatePartnerProfile AssociatePartnerProfile?
+  auditLogs               AuditLog[]
+  companyProfile          CompanyProfile?
+  documents               Document[]
+  investorProfile         InvestorProfile?
+  notifications           Notification[]
+  refreshTokens           RefreshToken[]
+  sessions                Session[]
+  verifications           Verification[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model InvestorProfile {
+  id                  String               @id @default(uuid())
+  accountId           String               @unique
+  fullName            String
+  address             String?
+  investmentRangeMin  Decimal?             @db.Decimal(18, 2)
+  investmentRangeMax  Decimal?             @db.Decimal(18, 2)
+  preferredIndustries String[]
+  bio                 String?
+  avatarUrl           String?
+  verificationStatus  VerificationStatus   @default(UNVERIFIED)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  investments         Investment[]
+  proposals           InvestmentProposal[]
+  account             Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([verificationStatus])
+}
+
+model CompanyProfile {
+  id                   String               @id @default(uuid())
+  accountId            String               @unique
+  companyName          String
+  registrationNumber   String?
+  industry             String?
+  description          String?
+  website              String?
+  foundedYear          Int?
+  teamSize             Int?
+  address              String?
+  logoUrl              String?
+  verificationStatus   VerificationStatus   @default(UNVERIFIED)
+  rejectionReason      String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  account              Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  fundingOpportunities FundingOpportunity[]
+
+  @@index([verificationStatus])
+  @@index([industry])
+}
+
+model AssociatePartnerProfile {
+  id         String   @id @default(uuid())
+  accountId  String   @unique
+  fullName   String
+  department String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model FundingOpportunity {
+  id               String               @id @default(uuid())
+  companyId        String
+  title            String
+  description      String
+  fundNeeded       Decimal              @db.Decimal(18, 2)
+  fundPurpose      String
+  valuation        Decimal?             @db.Decimal(18, 2)
+  minimumTicket    Decimal?             @db.Decimal(18, 2)
+  equityOfferedPct Decimal?             @db.Decimal(5, 2)
+  status           FundingStatus        @default(DRAFT)
+  rejectionReason  String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  company          CompanyProfile       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  investments      Investment[]
+  proposals        InvestmentProposal[]
+
+  @@index([status])
+  @@index([companyId])
+}
+
+model InvestmentProposal {
+  id                   String             @id @default(uuid())
+  investorId           String
+  fundingOpportunityId String
+  proposedAmount       Decimal            @db.Decimal(18, 2)
+  message              String?
+  status               ProposalStatus     @default(PENDING)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  investment           Investment?
+  fundingOpportunity   FundingOpportunity @relation(fields: [fundingOpportunityId], references: [id], onDelete: Cascade)
+  investor             InvestorProfile    @relation(fields: [investorId], references: [id], onDelete: Cascade)
+
+  @@unique([investorId, fundingOpportunityId])
+  @@index([status])
+}
+
+model Investment {
+  id                   String              @id @default(uuid())
+  investorId           String
+  fundingOpportunityId String
+  proposalId           String?             @unique
+  amount               Decimal             @db.Decimal(18, 2)
+  status               InvestmentStatus    @default(PENDING)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  fundingOpportunity   FundingOpportunity  @relation(fields: [fundingOpportunityId], references: [id], onDelete: Cascade)
+  investor             InvestorProfile     @relation(fields: [investorId], references: [id], onDelete: Cascade)
+  proposal             InvestmentProposal? @relation(fields: [proposalId], references: [id])
+
+  @@index([status])
+}
+
+model Document {
+  id              String         @id @default(uuid())
+  accountId       String
+  type            DocumentType
+  status          DocumentStatus @default(PENDING)
+  fileName        String
+  fileUrl         String
+  mimeType        String
+  sizeBytes       Int
+  bucket          String
+  rejectionReason String?
+  reviewedBy      String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  account         Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([type])
+  @@index([status])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  accountId String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  account   Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, isRead])
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  accountId  String?
+  action     AuditAction
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime    @default(now())
+  account    Account?    @relation(fields: [accountId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([accountId])
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  accountId   String
+  action      String
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  accountId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  accountId  String
+  userAgent  String?
+  ipAddress  String?
+  lastUsedAt DateTime @default(now())
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+model Verification {
+  id        String              @id @default(uuid())
+  accountId String
+  purpose   VerificationPurpose
+  codeHash  String
+  expiresAt DateTime
+  consumed  Boolean             @default(false)
+  attempts  Int                 @default(0)
+  createdAt DateTime            @default(now())
+  account   Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, purpose])
+}
+
+enum Role {
+  INVESTOR
+  COMPANY
+  ASSOCIATE_PARTNER
+}
+
+enum AccountStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum FundingStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  CLOSED
+  REJECTED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum InvestmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum DocumentType {
+  KYC
+  PITCH_DECK
+  COMPANY_REGISTRATION
+  FINANCIAL_STATEMENT
+  LOGO
+  AVATAR
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum NotificationType {
+  ACCOUNT
+  FUNDING
+  PROPOSAL
+  INVESTMENT
+  DOCUMENT
+  SYSTEM
+}
+
+enum VerificationPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  LOGIN_OTP
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  LOGIN
+  LOGOUT
+}
