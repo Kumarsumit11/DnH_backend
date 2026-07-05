@@ -2,7 +2,7 @@
   "name": "dnh-backend",
   "version": "1.0.0",
   "engines": {
-  "node": "20.x"
+  "node": "22.x"
 },
   "description": "DNH - Investor / Company / Associate Partner funding platform backend",
   "main": "dist/server.js",
