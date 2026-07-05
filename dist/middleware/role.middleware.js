@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authorize = authorize;
+exports.authorize = void 0;
 const AppError_1 = require("../errors/AppError");
 const errorCodes_1 = require("../constants/errorCodes");
 function authorize(...allowedRoles) {
@@ -14,3 +14,4 @@ function authorize(...allowedRoles) {
         next();
     };
 }
+exports.authorize = authorize;

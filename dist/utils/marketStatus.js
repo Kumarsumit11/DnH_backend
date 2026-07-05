@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMarketStatus = getMarketStatus;
+exports.getMarketStatus = void 0;
 function getMarketStatus() {
     const now = new Date(new Date().toLocaleString("en-US", {
         timeZone: "Asia/Kolkata",
@@ -19,3 +19,4 @@ function getMarketStatus() {
         lastUpdated: now.toISOString(),
     };
 }
+exports.getMarketStatus = getMarketStatus;

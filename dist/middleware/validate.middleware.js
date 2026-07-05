@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validate = validate;
+exports.validate = void 0;
 function validate(schema) {
     return (req, _res, next) => {
         schema.parse({
@@ -11,3 +11,4 @@ function validate(schema) {
         next();
     };
 }
+exports.validate = validate;

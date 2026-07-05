@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authenticate = authenticate;
+exports.authenticate = void 0;
 const jwt_1 = require("../utils/jwt");
 const AppError_1 = require("../errors/AppError");
 const errorCodes_1 = require("../constants/errorCodes");
@@ -20,3 +20,4 @@ function authenticate(req, _res, next) {
         return next(AppError_1.AppError.unauthorized('Invalid or expired access token', errorCodes_1.ErrorCode.TOKEN_EXPIRED));
     }
 }
+exports.authenticate = authenticate;

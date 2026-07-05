@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorMiddleware = errorMiddleware;
-exports.notFoundMiddleware = notFoundMiddleware;
+exports.notFoundMiddleware = exports.errorMiddleware = void 0;
 const AppError_1 = require("../errors/AppError");
 const errorCodes_1 = require("../constants/errorCodes");
 const zod_1 = require("zod");
@@ -45,6 +44,7 @@ function errorMiddleware(err, _req, res, _next) {
         errorCode: errorCodes_1.ErrorCode.INTERNAL_ERROR
     });
 }
+exports.errorMiddleware = errorMiddleware;
 function notFoundMiddleware(req, res) {
     res.status(404).json({
         success: false,
@@ -52,3 +52,4 @@ function notFoundMiddleware(req, res) {
         errorCode: errorCodes_1.ErrorCode.NOT_FOUND
     });
 }
+exports.notFoundMiddleware = notFoundMiddleware;

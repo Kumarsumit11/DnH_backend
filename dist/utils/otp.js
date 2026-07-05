@@ -3,8 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateOtp = generateOtp;
-exports.generateSecureToken = generateSecureToken;
+exports.generateSecureToken = exports.generateOtp = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 function generateOtp(length = 6) {
     const digits = '0123456789';
@@ -14,6 +13,8 @@ function generateOtp(length = 6) {
     }
     return otp;
 }
+exports.generateOtp = generateOtp;
 function generateSecureToken() {
     return crypto_1.default.randomBytes(32).toString('hex');
 }
+exports.generateSecureToken = generateSecureToken;
