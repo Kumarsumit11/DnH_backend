@@ -16,7 +16,10 @@ import cors from "cors";
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://dnh-frontend-mauve.vercel.app",
+    ],
     credentials: true,
   })
 );
