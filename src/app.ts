@@ -14,17 +14,24 @@ const app: Application = express();
 app.use(helmet());
 import cors from "cors";
 
-origin: (origin, callback) => {
-  if (
-    !origin ||
-    origin === "http://localhost:5173" ||
-    origin.endsWith(".vercel.app")
-  ) {
-    callback(null, true);
-  } else {
-    callback(new Error("Not allowed by CORS"));
-  }
-}
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "https://dnh-frontend-mauve.vercel.app",
+        "https://dnh-frontend-iqtdkztyp-info2sumitkumar-2476s-projects.vercel.app",
+      ];
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(compression());
 app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 app.use(express.json({ limit: '2mb' }));
