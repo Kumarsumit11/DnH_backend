@@ -6,8 +6,8 @@ import { companyService } from '../services/company.service';
 
 export const investmentController = {
   createProposal: asyncHandler(async (req: Request, res: Response) => {
-    const { fundingOpportunityId, proposedAmount, message } = req.body;
-    const proposal = await investmentService.createProposal(req.account!.id, fundingOpportunityId, proposedAmount, message);
+    const { fundingOpportunityId, proposedAmount, sharesRequested, message } = req.body;
+    const proposal = await investmentService.createProposal(req.account!.id, fundingOpportunityId, proposedAmount, message, sharesRequested);
     sendSuccess(res, proposal, 'Proposal submitted', 201);
   }),
 

@@ -23,5 +23,16 @@ export const fundingRepository = {
     prisma.fundingOpportunity.findMany({ where: { status: FundingStatus.PENDING_APPROVAL }, include: { company: true } }),
 
   listActive: (skip: number, take: number) =>
-    prisma.fundingOpportunity.findMany({ where: { status: FundingStatus.ACTIVE }, include: { company: true }, skip, take })
+    prisma.fundingOpportunity.findMany({ where: { status: FundingStatus.ACTIVE }, include: { company: true }, skip, take }),
+
+  getSharesSold: async (fundingOpportunityId: string) => {
+    const result = await prisma.investment.aggregate({
+      where: {
+        fundingOpportunityId,
+        status: { in: ['CONFIRMED', 'COMPLETED'] }
+      },
+      _sum: { shares: true }
+    });
+    return result._sum.shares ?? 0;
+  }
 };

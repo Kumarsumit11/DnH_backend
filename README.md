@@ -38,7 +38,7 @@ Layering: **routes → controllers → services → repositories → Prisma**. C
    - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — generate with `openssl rand -hex 32`
    - `SMTP_*` — any SMTP provider (Gmail app password, SendGrid, Resend SMTP, etc). If left blank, OTP emails are logged to console instead of sent — useful for local dev.
 3. `npx prisma migrate dev --name init` — creates all tables in your Supabase Postgres.
-4. `npx prisma generate` — generates the typed Prisma client (this couldn't be run in the sandbox that built this scaffold due to network restrictions, but works normally with internet access).
+4. `px prisma generate` — generates the typed Prisma client (this couldn't be run in the sandbox that built this scaffold due to network restrictions, but works normally with internet access).
 5. Create Supabase Storage buckets (Dashboard → Storage → New bucket), all **public**:
    - `company-documents`
    - `investor-documents`
@@ -83,7 +83,7 @@ Error:
 
 ## Full API Reference
 
-### Auth — `/api/auth` (public)
+### Auth — `/napi/auth` (public)
 | Method | Route | Body |
 |---|---|---|
 | POST | `/register/investor` | email, password, fullName, phone?, address? |

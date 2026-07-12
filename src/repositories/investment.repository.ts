@@ -2,9 +2,15 @@ import { prisma } from '../config/prisma';
 import { ProposalStatus, InvestmentStatus } from '@prisma/client';
 
 export const investmentRepository = {
-  createProposal: (investorId: string, fundingOpportunityId: string, proposedAmount: number, message?: string) =>
+  createProposal: (
+    investorId: string,
+    fundingOpportunityId: string,
+    proposedAmount: number,
+    message?: string,
+    sharesRequested?: number
+  ) =>
     prisma.investmentProposal.create({
-      data: { investorId, fundingOpportunityId, proposedAmount, message }
+      data: { investorId, fundingOpportunityId, proposedAmount, message, sharesRequested }
     }),
 
   findProposalById: (id: string) =>
@@ -30,9 +36,9 @@ export const investmentRepository = {
   updateProposalStatus: (id: string, status: ProposalStatus) =>
     prisma.investmentProposal.update({ where: { id }, data: { status } }),
 
-  createInvestment: (investorId: string, fundingOpportunityId: string, proposalId: string, amount: number) =>
+  createInvestment: (investorId: string, fundingOpportunityId: string, proposalId: string, amount: number, shares?: number) =>
     prisma.investment.create({
-      data: { investorId, fundingOpportunityId, proposalId, amount, status: InvestmentStatus.CONFIRMED }
+      data: { investorId, fundingOpportunityId, proposalId, amount, shares, status: InvestmentStatus.CONFIRMED }
     }),
 
   listInvestmentsByInvestor: (investorId: string) =>

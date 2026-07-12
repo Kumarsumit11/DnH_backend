@@ -21,13 +21,26 @@ export const fundingService = {
   async listOwn(accountId: string) {
     const company = await companyRepository.findByAccountId(accountId);
     if (!company) throw AppError.notFound('Company profile not found');
-    return fundingRepository.listByCompany(company.id);
+    const opportunities = await fundingRepository.listByCompany(company.id);
+    return Promise.all(opportunities.map(async (o) => {
+      const sharesSold = o.totalShares ? await fundingRepository.getSharesSold(o.id) : 0;
+      return {
+        ...o,
+        sharesSold,
+        sharesRemaining: o.totalShares ? o.totalShares - sharesSold : null
+      };
+    }));
   },
 
   async getById(id: string) {
     const opportunity = await fundingRepository.findById(id);
     if (!opportunity) throw AppError.notFound('Funding opportunity not found');
-    return opportunity;
+    const sharesSold = opportunity.totalShares ? await fundingRepository.getSharesSold(id) : 0;
+    return {
+      ...opportunity,
+      sharesSold,
+      sharesRemaining: opportunity.totalShares ? opportunity.totalShares - sharesSold : null
+    };
   },
 
   async update(accountId: string, id: string, data: Prisma.FundingOpportunityUpdateInput) {
@@ -70,6 +83,14 @@ export const fundingService = {
 
   async listActive(page: number, limit: number) {
     const skip = (page - 1) * limit;
-    return fundingRepository.listActive(skip, limit);
+    const list = await fundingRepository.listActive(skip, limit);
+    return Promise.all(list.map(async (o) => {
+      const sharesSold = o.totalShares ? await fundingRepository.getSharesSold(o.id) : 0;
+      return {
+        ...o,
+        sharesSold,
+        sharesRemaining: o.totalShares ? o.totalShares - sharesSold : null
+      };
+    }));
   }
 };

@@ -72,6 +72,7 @@ model CompanyProfile {
   updatedAt            DateTime             @updatedAt
   account              Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
   fundingOpportunities FundingOpportunity[]
+  financialAnalyses FinancialAnalysis[]
 
   @@index([verificationStatus])
   @@index([industry])
@@ -97,6 +98,8 @@ model FundingOpportunity {
   valuation        Decimal?             @db.Decimal(18, 2)
   minimumTicket    Decimal?             @db.Decimal(18, 2)
   equityOfferedPct Decimal?             @db.Decimal(5, 2)
+  totalShares      Int?
+  pricePerShare    Decimal?             @db.Decimal(18, 2)
   status           FundingStatus        @default(DRAFT)
   rejectionReason  String?
   createdAt        DateTime             @default(now())
@@ -114,6 +117,7 @@ model InvestmentProposal {
   investorId           String
   fundingOpportunityId String
   proposedAmount       Decimal            @db.Decimal(18, 2)
+  sharesRequested      Int?
   message              String?
   status               ProposalStatus     @default(PENDING)
   createdAt            DateTime           @default(now())
@@ -132,6 +136,7 @@ model Investment {
   fundingOpportunityId String
   proposalId           String?             @unique
   amount               Decimal             @db.Decimal(18, 2)
+  shares               Int?
   status               InvestmentStatus    @default(PENDING)
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
@@ -326,4 +331,57 @@ enum AuditAction {
   REJECT
   LOGIN
   LOGOUT
+}
+
+
+model FinancialAnalysis {
+  id       String @id @default(uuid())
+  companyId String
+
+  company  CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // --- Revenue & Profitability ---
+  revenue             Float?
+  revenueTarget       Float?
+  grossProfit         Float?
+  operatingProfit     Float?
+  netProfitBeforeTax  Float?
+  operatingExpenses   Float?
+  costOfGoodsSold     Float?
+  otherIncome         Float?
+  financeExpense      Float?
+
+  // --- Liquidity / Balance Sheet ---
+  cashFlow            Float?
+  currentRatio        Float?
+  inventory           Float?
+  accountsReceivable  Float?
+  totalAssets         Float?
+  totalLiabilities    Float?
+
+  // --- Equity / Shares ---
+  shareCapital        Float?
+  totalShares         Int?
+  sharesSold          Int?
+  sharesRemaining     Int?   // derived + persisted for fast reads
+
+  // --- Funding ---
+  fundingTarget       Float?
+  fundingRaised       Float?
+  investorCount       Int?
+
+  // --- Derived metrics (calculated server-side, persisted for fast reads) ---
+  profitMargin        Float?
+  revenueGrowth       Float?
+
+  // --- Period ---
+  financialYear       Int
+  month                Int // 1-12
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([companyId, financialYear, month], name: "companyId_financialYear_month")
+  @@index([companyId])
+  @@index([companyId, financialYear])
 }

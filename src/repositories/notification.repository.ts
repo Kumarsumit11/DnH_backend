@@ -14,5 +14,8 @@ export const notificationRepository = {
   markRead: (id: string) => prisma.notification.update({ where: { id }, data: { isRead: true } }),
 
   markAllRead: (accountId: string) =>
-    prisma.notification.updateMany({ where: { accountId, isRead: false }, data: { isRead: true } })
+    prisma.notification.updateMany({ where: { accountId, isRead: false }, data: { isRead: true } }),
+
+  countUnread: (accountId: string) =>
+    prisma.notification.count({ where: { accountId, isRead: false } })
 };

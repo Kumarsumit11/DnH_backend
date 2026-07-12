@@ -7,7 +7,7 @@ import { notificationRepository } from '../repositories/notification.repository'
 import { auditRepository } from '../repositories/audit.repository';
 
 export const investmentService = {
-  async createProposal(accountId: string, fundingOpportunityId: string, proposedAmount: number, message?: string) {
+  async createProposal(accountId: string, fundingOpportunityId: string, proposedAmount: number, message?: string, sharesRequested?: number) {
     const investor = await investorRepository.findByAccountId(accountId);
     if (!investor) throw AppError.notFound('Investor profile not found');
 
@@ -17,13 +17,13 @@ export const investmentService = {
       throw AppError.badRequest('This funding opportunity is not currently accepting proposals');
     }
 
-    const proposal = await investmentRepository.createProposal(investor.id, fundingOpportunityId, proposedAmount, message);
+    const proposal = await investmentRepository.createProposal(investor.id, fundingOpportunityId, proposedAmount, message, sharesRequested);
 
     await notificationRepository.create(
       opportunity.company.accountId,
       'PROPOSAL',
       'New investment proposal received',
-      `${investor.fullName} proposed an investment of ${proposedAmount} on "${opportunity.title}"`
+      `${investor.fullName} proposed an investment of ${proposedAmount}${sharesRequested ? ` for ${sharesRequested} shares` : ''} on "${opportunity.title}"`
     );
     await auditRepository.logActivity(accountId, 'PROPOSAL_CREATED', `Proposed ${proposedAmount} on ${opportunity.title}`);
 
@@ -57,7 +57,8 @@ export const investmentService = {
         proposal.investorId,
         proposal.fundingOpportunityId,
         proposal.id,
-        Number(proposal.proposedAmount)
+        Number(proposal.proposedAmount),
+        proposal.sharesRequested ?? undefined
       );
     }
 
