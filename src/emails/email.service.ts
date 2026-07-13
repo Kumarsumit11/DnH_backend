@@ -17,6 +17,15 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 20000,
 });
 
+transporter.verify()
+  .then(() => {
+    console.log("✅ SMTP VERIFIED SUCCESSFULLY");
+  })
+  .catch((err) => {
+    console.error("❌ SMTP VERIFY FAILED");
+    console.error(err);
+  });
+
 async function send(to: string, subject: string, html: string) {
   if (!env.SMTP_HOST) {
     console.log(`[EMAIL SKIPPED - no SMTP configured] To: ${to} | Subject: ${subject}`);
