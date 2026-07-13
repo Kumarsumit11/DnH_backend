@@ -21,6 +21,7 @@ app.use(
         "http://localhost:5173",
         "https://dnh-frontend-mauve.vercel.app",
         "https://dnh-frontend-iqtdkztyp-info2sumitkumar-2476s-projects.vercel.app",
+        "https://www.dnhfintech.com/",
       ];
 
       if (!origin || allowedOrigins.includes(origin)) {
