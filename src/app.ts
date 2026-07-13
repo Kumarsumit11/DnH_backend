@@ -22,6 +22,7 @@ app.use(
         "https://dnh-frontend-mauve.vercel.app",
         "https://dnh-frontend-iqtdkztyp-info2sumitkumar-2476s-projects.vercel.app",
         "https://www.dnhfintech.com/",
+        "https://www.dnhfintech.com",
       ];
 
       if (!origin || allowedOrigins.includes(origin)) {
