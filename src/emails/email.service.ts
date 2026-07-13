@@ -3,9 +3,18 @@ import { env } from '../config/env';
 
 const transporter = nodemailer.createTransport({
   host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_PORT === 465,
-  auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined
+  port: Number(env.SMTP_PORT),
+  secure: false, // Use false for port 587
+  requireTLS: true,
+
+  auth: {
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASS,
+  },
+
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
 });
 
 async function send(to: string, subject: string, html: string) {

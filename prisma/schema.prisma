@@ -55,24 +55,34 @@ model InvestorProfile {
 }
 
 model CompanyProfile {
-  id                   String               @id @default(uuid())
-  accountId            String               @unique
-  companyName          String
-  registrationNumber   String?
-  industry             String?
-  description          String?
-  website              String?
-  foundedYear          Int?
-  teamSize             Int?
-  address              String?
-  logoUrl              String?
-  verificationStatus   VerificationStatus   @default(UNVERIFIED)
-  rejectionReason      String?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  id                 String  @id @default(uuid())
+  accountId          String  @unique
+  companyName        String
+  registrationNumber String?
+  industry           String?
+  description        String?
+  website            String?
+  foundedYear        Int?
+  teamSize           Int?
+  address            String?
+  logoUrl            String?
+
+  gstin          String?
+  ceoName        String?
+  cfoName        String?
+  monthlyRevenue Decimal? @db.Decimal(18, 2)
+  yearlyRevenue  Decimal? @db.Decimal(18, 2)
+
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  rejectionReason    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   account              Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
   fundingOpportunities FundingOpportunity[]
-  financialAnalyses FinancialAnalysis[]
+  financialAnalyses    FinancialAnalysis[]
+  updates              CompanyUpdate[]
 
   @@index([verificationStatus])
   @@index([industry])
@@ -250,6 +260,36 @@ model Verification {
   @@index([accountId, purpose])
 }
 
+model CompanyUpdate {
+  id         String           @id @default(uuid())
+  companyId  String
+  authorRole UpdateAuthorRole
+  authorName String
+  title      String
+  content    String
+  category   UpdateCategory   @default(GENERAL)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  company CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([companyId, createdAt])
+}
+
+enum UpdateAuthorRole {
+  CEO
+  CFO
+}
+
+enum UpdateCategory {
+  GENERAL
+  FINANCIAL
+  PRODUCT
+  MILESTONE
+  RISK
+}
+
 enum Role {
   INVESTOR
   COMPANY
@@ -333,53 +373,52 @@ enum AuditAction {
   LOGOUT
 }
 
-
 model FinancialAnalysis {
-  id       String @id @default(uuid())
+  id        String @id @default(uuid())
   companyId String
 
-  company  CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // --- Revenue & Profitability ---
-  revenue             Float?
-  revenueTarget       Float?
-  grossProfit         Float?
-  operatingProfit     Float?
-  netProfitBeforeTax  Float?
-  operatingExpenses   Float?
-  costOfGoodsSold     Float?
-  otherIncome         Float?
-  financeExpense      Float?
+  revenue            Float?
+  revenueTarget      Float?
+  grossProfit        Float?
+  operatingProfit    Float?
+  netProfitBeforeTax Float?
+  operatingExpenses  Float?
+  costOfGoodsSold    Float?
+  otherIncome        Float?
+  financeExpense     Float?
 
   // --- Liquidity / Balance Sheet ---
-  cashFlow            Float?
-  currentRatio        Float?
-  inventory           Float?
-  accountsReceivable  Float?
-  totalAssets         Float?
-  totalLiabilities    Float?
+  cashFlow           Float?
+  currentRatio       Float?
+  inventory          Float?
+  accountsReceivable Float?
+  totalAssets        Float?
+  totalLiabilities   Float?
 
   // --- Equity / Shares ---
-  shareCapital        Float?
-  totalShares         Int?
-  sharesSold          Int?
-  sharesRemaining     Int?   // derived + persisted for fast reads
+  shareCapital    Float?
+  totalShares     Int?
+  sharesSold      Int?
+  sharesRemaining Int? // derived + persisted for fast reads
 
   // --- Funding ---
-  fundingTarget       Float?
-  fundingRaised       Float?
-  investorCount       Int?
+  fundingTarget Float?
+  fundingRaised Float?
+  investorCount Int?
 
   // --- Derived metrics (calculated server-side, persisted for fast reads) ---
-  profitMargin        Float?
-  revenueGrowth       Float?
+  profitMargin  Float?
+  revenueGrowth Float?
 
   // --- Period ---
-  financialYear       Int
-  month                Int // 1-12
+  financialYear Int
+  month         Int // 1-12
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([companyId, financialYear, month], name: "companyId_financialYear_month")
   @@index([companyId])
