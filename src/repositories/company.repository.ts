@@ -1,3 +1,4 @@
+// company.repository.ts
 import { prisma } from '../config/prisma';
 import { VerificationStatus, FundingStatus, Prisma } from '@prisma/client';
 
@@ -8,7 +9,17 @@ export const companyRepository = {
     prisma.companyProfile.findUnique({ where: { id }, include: { account: true, fundingOpportunities: true } }),
 
   update: (accountId: string, data: Prisma.CompanyProfileUpdateInput) =>
-    prisma.companyProfile.update({ where: { accountId }, data }),
+    prisma.companyProfile.upsert({
+      where: { accountId },
+      update: data,
+      create: {
+        accountId,
+        // companyName is required (non-nullable) on create — fall back if this update
+        // is the very first write for this account and didn't include a name.
+        companyName: (data.companyName as string) ?? 'Unnamed Company',
+        ...(data as unknown as Prisma.CompanyProfileCreateInput),
+      },
+    }),
 
   updateLogo: (accountId: string, logoUrl: string) =>
     prisma.companyProfile.update({ where: { accountId }, data: { logoUrl } }),
@@ -33,10 +44,7 @@ export const companyRepository = {
         fundingOpportunities: {
           some: {
             status: FundingStatus.ACTIVE,
-            fundNeeded: {
-              gte: filters.minFund,
-              lte: filters.maxFund
-            }
+            fundNeeded: { gte: filters.minFund, lte: filters.maxFund }
           }
         }
       },

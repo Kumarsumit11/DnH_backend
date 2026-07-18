@@ -73,6 +73,8 @@ model CompanyProfile {
   monthlyRevenue Decimal? @db.Decimal(18, 2)
   yearlyRevenue  Decimal? @db.Decimal(18, 2)
 
+  informationMemo Json?   // ← new: stores the full Information Memo (SWOT, financials, entity overview, etc.)
+
   verificationStatus VerificationStatus @default(UNVERIFIED)
   rejectionReason    String?
 

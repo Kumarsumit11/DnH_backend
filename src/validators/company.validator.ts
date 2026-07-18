@@ -1,4 +1,30 @@
+// company.validator.ts
 import { z } from 'zod';
+
+const informationMemoSchema = z.object({
+  borrower: z.string().optional(),
+  promoters: z.string().optional(),
+  coBorrowerGuarantor: z.string().optional(),
+  aboutBorrowingEntity: z.string().optional(),
+  registeredAddress: z.string().optional(),
+  corporateOffice: z.string().optional(),
+  aboutGroup: z.string().optional(),
+  aboutPromoter: z.string().optional(),
+  shareholdingPattern: z.string().optional(),
+  directorsProfile: z.string().optional(),
+  financials: z.record(z.string(), z.record(z.string(), z.string())).optional(),
+  repaymentHistory: z.string().optional(),
+  expansionPlan: z.string().optional(),
+  employeeStrength: z.string().optional(),
+  industryOverview: z.string().optional(),
+  topCustomers: z.string().optional(),
+  currentBankingArrangement: z.string().optional(),
+  proposedTransaction: z.string().optional(),
+  proposedBankingArrangement: z.string().optional(),
+  collateralSecurity: z.string().optional(),
+  otherSecurity: z.string().optional(),
+  swotAnalysis: z.string().optional(),
+});
 
 export const updateCompanyProfileSchema = z.object({
   body: z.object({
@@ -17,5 +43,6 @@ export const updateCompanyProfileSchema = z.object({
     cfoName: z.string().min(2).max(100).optional(),
     monthlyRevenue: z.coerce.number().nonnegative().optional(),
     yearlyRevenue: z.coerce.number().nonnegative().optional(),
+    informationMemo: informationMemoSchema.optional(), // ← new
   })
 });
