@@ -4,6 +4,17 @@ import { env } from '../config/env';
 
 const brevo = new BrevoClient({ apiKey: env.BREVO_API_KEY });
 
+// Parses "Name <email@domain.com>" or a plain "email@domain.com" into { name?, email }
+function parseSender(from: string): { name?: string; email: string } {
+  const match = from.match(/^(.*)<(.+)>$/);
+  if (match) {
+    return { name: match[1].trim().replace(/^["']|["']$/g, ''), email: match[2].trim() };
+  }
+  return { email: from.trim() };
+}
+
+const sender = parseSender(env.SMTP_FROM);
+
 async function send(to: string, subject: string, html: string) {
   if (!env.BREVO_API_KEY) {
     console.log(`[EMAIL SKIPPED - no BREVO_API_KEY configured] To: ${to} | Subject: ${subject}`);
@@ -14,7 +25,7 @@ async function send(to: string, subject: string, html: string) {
     await brevo.transactionalEmails.sendTransacEmail({
       subject,
       htmlContent: html,
-      sender: { email: env.SMTP_FROM },
+      sender,
       to: [{ email: to }],
     });
   } catch (err: any) {
