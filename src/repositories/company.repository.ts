@@ -13,11 +13,9 @@ export const companyRepository = {
       where: { accountId },
       update: data,
       create: {
+        ...(data as unknown as Prisma.CompanyProfileUncheckedCreateInput),
         accountId,
-        // companyName is required (non-nullable) on create — fall back if this update
-        // is the very first write for this account and didn't include a name.
         companyName: (data.companyName as string) ?? 'Unnamed Company',
-        ...(data as unknown as Prisma.CompanyProfileCreateInput),
       },
     }),
 
