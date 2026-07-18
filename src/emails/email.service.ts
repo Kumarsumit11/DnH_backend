@@ -1,37 +1,26 @@
-import nodemailer from 'nodemailer';
+// email.service.ts
+import { BrevoClient } from '@getbrevo/brevo';
 import { env } from '../config/env';
 
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: 465,
-  secure: true, // Use false for port 587
-  requireTLS: true,
-
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
-  },
-
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-});
-
-transporter.verify()
-  .then(() => {
-    console.log("✅ SMTP VERIFIED SUCCESSFULLY");
-  })
-  .catch((err) => {
-    console.error("❌ SMTP VERIFY FAILED");
-    console.error(err);
-  });
+const brevo = new BrevoClient({ apiKey: env.BREVO_API_KEY });
 
 async function send(to: string, subject: string, html: string) {
-  if (!env.SMTP_HOST) {
-    console.log(`[EMAIL SKIPPED - no SMTP configured] To: ${to} | Subject: ${subject}`);
+  if (!env.BREVO_API_KEY) {
+    console.log(`[EMAIL SKIPPED - no BREVO_API_KEY configured] To: ${to} | Subject: ${subject}`);
     return;
   }
-  await transporter.sendMail({ from: env.SMTP_FROM, to, subject, html });
+
+  try {
+    await brevo.transactionalEmails.sendTransacEmail({
+      subject,
+      htmlContent: html,
+      sender: { email: env.SMTP_FROM },
+      to: [{ email: to }],
+    });
+  } catch (err: any) {
+    console.error('❌ Brevo send failed:', err?.response?.body || err?.message || err);
+    throw new Error('Failed to send email');
+  }
 }
 
 export const emailService = {

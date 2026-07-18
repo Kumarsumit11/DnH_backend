@@ -2,8 +2,8 @@
   "name": "dnh-backend",
   "version": "1.0.0",
   "engines": {
-  "node": "22.x"
-},
+    "node": "22.x"
+  },
   "description": "DNH - Investor / Company / Associate Partner funding platform backend",
   "main": "dist/server.js",
   "scripts": {
@@ -15,6 +15,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^6.0.2",
     "@prisma/client": "^5.19.1",
     "@supabase/supabase-js": "^2.45.4",
     "axios": "^1.18.1",
