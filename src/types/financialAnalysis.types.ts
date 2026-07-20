@@ -143,6 +143,7 @@ export interface CompanySummary {
   verificationStatus: string;
   rejectionReason: string | null;
   createdAt: Date;
+  informationMemo?: unknown;
 }
 
 /** Frontend-ready shape produced by toFrontendShape(). */

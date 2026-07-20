@@ -14,6 +14,7 @@ const COMPANY_SELECT = {
   verificationStatus: true,
   rejectionReason: true,
   createdAt: true,
+  informationMemo: true,
   account: { select: { email: true } },
 } as const;
 
@@ -23,6 +24,7 @@ type RawCompanyRow = {
   verificationStatus: string;
   rejectionReason: string | null;
   createdAt: Date;
+  informationMemo: unknown;
   account: { email: string } | null;
 };
 
@@ -34,6 +36,7 @@ function flattenCompany(row: RawCompanyRow): CompanySummary {
     verificationStatus: row.verificationStatus,
     rejectionReason: row.rejectionReason,
     createdAt: row.createdAt,
+    informationMemo: row.informationMemo,
   };
 }
 
@@ -56,7 +59,7 @@ export const adminRepository = {
     verificationStatus,
     search,
   }: FindAllCompaniesParams): Promise<FindAllCompaniesResult> {
-    const where = {
+    const where: any = {
       ...(verificationStatus ? { verificationStatus } : {}),
       ...(search
         ? {
@@ -69,7 +72,7 @@ export const adminRepository = {
     };
 
     // Note: search now matches company name OR the related account's email.
-    const searchWhere = search
+    const searchWhere: any = search
       ? {
           OR: [
             { companyName: { contains: search, mode: 'insensitive' as const } },
