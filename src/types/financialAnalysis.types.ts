@@ -240,6 +240,7 @@ export interface AdminCompanyDetailResult {
     email: string;
     verificationStatus: string;
     createdAt: Date;
+        informationMemo?: unknown; // ← new
   };
   financial: FinancialAnalysisFrontendShape | null;
   fundingStatus: FundingStatus;

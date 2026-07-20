@@ -115,7 +115,7 @@ export const verificationRepository = {
     verificationStatus?: string;
     search?: string;
   }): Promise<{ investors: InvestorListRow[]; total: number }> {
-    const where = {
+    const where: any = {
       ...(verificationStatus ? { verificationStatus } : {}),
       ...(search
         ? {
@@ -199,7 +199,7 @@ export const verificationRepository = {
     type?: string;
     accountId?: string;
   }): Promise<{ documents: DocumentListRow[]; total: number }> {
-    const where = {
+    const where: any = {
       ...(status ? { status } : {}),
       ...(type ? { type } : {}),
       ...(accountId ? { accountId } : {}),
