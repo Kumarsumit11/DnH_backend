@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import { AppError } from '../errors/AppError';
 import { ErrorCode } from '../constants/errorCodes';
 import { ZodError } from 'zod';
@@ -54,3 +54,24 @@ export function notFoundMiddleware(req: Request, res: Response) {
     errorCode: ErrorCode.NOT_FOUND
   });
 }
+
+export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  if (err instanceof ZodError) {
+    res.status(422).json({
+      success: false,
+      message: 'Validation failed',
+      errors: err.issues.map((e) => ({
+        field: e.path.join('.'),
+        message: e.message,
+      })),
+    });
+    return;
+  }
+
+  const statusCode = (err as { statusCode?: number })?.statusCode || 500;
+  const message = (err as { message?: string })?.message || 'Internal server error';
+  res.status(statusCode).json({
+    success: false,
+    message,
+  });
+};
