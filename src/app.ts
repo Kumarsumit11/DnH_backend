@@ -12,7 +12,8 @@ import adminRoutes from './routes/admin.routes';
 import verificationRoutes from './routes/verification.routes';
 import { errorHandler } from './middleware/error.middleware';
 import routes from './routes';
-
+import { publicConsultationRouter, adminConsultationRouter } from './routes/consultation.routes';
+import tallyRoutes from './routes/tally.routes';
 const app: Application = express();
 
 app.set("trust proxy", 1);
@@ -51,6 +52,12 @@ app.use(globalRateLimiter);
 app.use('/financial-analysis', financialAnalysisRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin', verificationRoutes);
+app.use('/api/consultations', publicConsultationRouter);
+app.use('/api/admin/consultations', adminConsultationRouter);
+app.use('/api/tally', tallyRoutes);
+
+// Register LAST, after all routes:
+app.use(errorHandler);
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, message: 'DNH backend is healthy', data: { timestamp: new Date().toISOString() } });
@@ -64,3 +71,5 @@ app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 export default app;
+
+

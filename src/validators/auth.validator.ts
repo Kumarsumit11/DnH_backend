@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+
 export const registerInvestorSchema = z.object({
   body: z.object({
     email: z.string().email(),
@@ -77,3 +78,6 @@ export const completeProfileSchema = z.object({
     address: z.string().optional(),
   }),
 });
+
+
+

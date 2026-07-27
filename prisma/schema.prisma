@@ -29,6 +29,7 @@ model Account {
   refreshTokens           RefreshToken[]
   sessions                Session[]
   verifications           Verification[]
+  monthlySubmissions      MonthlySubmission[]
 
   @@index([email])
   @@index([role])
@@ -85,6 +86,7 @@ model CompanyProfile {
   fundingOpportunities FundingOpportunity[]
   financialAnalyses    FinancialAnalysis[]
   updates              CompanyUpdate[]
+  fiscalYearConfigs    FiscalYearConfig[]
 
   @@index([verificationStatus])
   @@index([industry])
@@ -331,6 +333,111 @@ model FinancialAnalysis {
   @@index([companyId, financialYear])
 }
 
+
+model Consultation {
+  id                String               @id @default(uuid())
+  fullName          String
+  email             String
+  phone             String
+  company           String?
+  consultationType  ConsultationType
+  preferredDate     DateTime
+  preferredTime     String
+  notes             String?
+  status            ConsultationStatus   @default(PENDING)
+  actionToken       String?              @unique
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+// ============================================================================
+// Tally Interactive Form — added from 001_create_tally_schema.sql
+// company_id -> CompanyProfile.id (uuid), submitted_by -> Account.id (uuid)
+// ============================================================================
+
+model FiscalYearConfig {
+  id                    String    @id @default(uuid())
+  companyId             String
+  fiscalYearLabel       String // "2024-25"
+  startMonth            MonthEnum
+  targetGreenThreshold  Decimal   @default(1.00) @db.Decimal(5, 4) // 100%
+  targetAmberThreshold  Decimal   @default(0.90) @db.Decimal(5, 4) // 90%
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  company            CompanyProfile      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  products           Product[]
+  monthlySubmissions MonthlySubmission[]
+
+  @@unique([companyId, fiscalYearLabel])
+}
+
+model IndicatorDefinition {
+  id              String              @id @default(uuid())
+  code            String              @unique // 'total_revenue', 'cogs', ...
+  label           String
+  dashboardScope  DashboardScope
+  dataType        DataTypeEnum
+  calculationType CalculationType     @default(SUM)
+  hasTarget       Boolean             @default(false)
+  hasLastYear     Boolean             @default(false)
+  isFormula       Boolean             @default(false) // true = never user-editable
+  formulaKey      String? // key into calculationService
+  allowNegative   Boolean             @default(false)
+  sortOrder       Int                 @default(0)
+
+  indicatorValues IndicatorValue[]
+}
+
+model Product {
+  id                 String  @id @default(uuid())
+  fiscalYearConfigId String
+  slot               Int // 1-5
+  name               String?
+
+  fiscalYearConfig FiscalYearConfig @relation(fields: [fiscalYearConfigId], references: [id], onDelete: Cascade)
+  indicatorValues  IndicatorValue[]
+
+  @@unique([fiscalYearConfigId, slot])
+}
+
+model MonthlySubmission {
+  id                  String            @id @default(uuid())
+  fiscalYearConfigId  String
+  month               MonthEnum
+  status              SubmissionStatus  @default(DRAFT)
+  submittedAt         DateTime?
+  submittedById       String? // FK to Account
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  fiscalYearConfig FiscalYearConfig @relation(fields: [fiscalYearConfigId], references: [id], onDelete: Cascade)
+  submittedBy      Account?         @relation(fields: [submittedById], references: [id])
+  indicatorValues  IndicatorValue[]
+
+  @@unique([fiscalYearConfigId, month])
+  @@index([fiscalYearConfigId])
+}
+
+model IndicatorValue {
+  id                     String    @id @default(uuid())
+  monthlySubmissionId    String
+  indicatorDefinitionId  String
+  productId              String?
+  valueType              ValueType
+  value                  Decimal   @db.Decimal(18, 4)
+
+  monthlySubmission   MonthlySubmission   @relation(fields: [monthlySubmissionId], references: [id], onDelete: Cascade)
+  indicatorDefinition IndicatorDefinition @relation(fields: [indicatorDefinitionId], references: [id])
+  product             Product?            @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([monthlySubmissionId, indicatorDefinitionId, productId, valueType])
+  @@index([monthlySubmissionId])
+}
+
 enum UpdateAuthorRole {
   CEO
   CFO
@@ -425,4 +532,70 @@ enum AuditAction {
   REJECT
   LOGIN
   LOGOUT
+}
+
+enum ConsultationType {
+  DEBT_FUNDING
+  EQUITY_INVESTMENT
+  WORKING_CAPITAL
+  PROJECT_FINANCE
+  STRATEGIC_ADVISORY
+  PARTNERSHIP
+  OTHER
+}
+
+enum ConsultationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+// --- New enums for the Tally Interactive Form ---
+
+enum DashboardScope {
+  CEO
+  CFO
+  BOTH
+}
+
+enum DataTypeEnum {
+  CURRENCY
+  PERCENT
+  DAYS
+  COUNT
+  RATIO
+}
+
+enum CalculationType {
+  SUM
+  AVERAGE
+  LAST_VALUE
+}
+
+enum ValueType {
+  ACTUAL
+  TARGET
+  LAST_YEAR
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum MonthEnum {
+  JAN
+  FEB
+  MAR
+  APR
+  MAY
+  JUN
+  JUL
+  AUG
+  SEP
+  OCT
+  NOV
+  DEC
 }

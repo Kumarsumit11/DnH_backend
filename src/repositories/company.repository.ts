@@ -34,20 +34,24 @@ export const companyRepository = {
       include: { account: true }
     }),
 
-  listApprovedWithFilters: (filters: { industry?: string; minFund?: number; maxFund?: number }, skip: number, take: number) =>
+listApprovedWithFilters: (filters: { industry?: string; minFund?: number; maxFund?: number }, skip: number, take: number) =>
     prisma.companyProfile.findMany({
       where: {
         verificationStatus: VerificationStatus.VERIFIED,
-        industry: filters.industry,
-        fundingOpportunities: {
-          some: {
-            status: FundingStatus.ACTIVE,
-            fundNeeded: { gte: filters.minFund, lte: filters.maxFund }
-          }
-        }
+        ...(filters.industry ? { industry: filters.industry } : {}),
+        ...(filters.minFund !== undefined || filters.maxFund !== undefined
+          ? {
+              fundingOpportunities: {
+                some: {
+                  status: FundingStatus.ACTIVE,
+                  fundNeeded: { gte: filters.minFund, lte: filters.maxFund },
+                },
+              },
+            }
+          : {}),
       },
       include: { fundingOpportunities: { where: { status: FundingStatus.ACTIVE } } },
       skip,
-      take
+      take,
     })
 };
