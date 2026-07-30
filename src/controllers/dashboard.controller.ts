@@ -80,13 +80,9 @@ export const dashboardController = {
     });
   }),
 
-  associateDashboard: asyncHandler(async (_req: Request, res: Response) => {
-    const [pendingCompanies, pendingFunding, pendingDocuments, analytics] = await Promise.all([
-      associateService.listPendingCompanies(),
-      associateService.listPendingFunding(),
-      associateService.listPendingDocuments(),
-      associateService.getAnalytics()
-    ]);
-    sendSuccess(res, { pendingCompanies, pendingFunding, pendingDocuments, analytics });
-  })
+associateDashboard: asyncHandler(async (_req: Request, res: Response) => {
+  const stats = await associateService.getDashboardStats();
+
+  sendSuccess(res, stats);
+})
 };
