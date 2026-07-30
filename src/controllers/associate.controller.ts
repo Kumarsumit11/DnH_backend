@@ -2,65 +2,59 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { sendSuccess } from '../utils/apiResponse';
 import { associateService } from '../services/associate.service';
-import { fundingService } from '../services/funding.service';
-import { Role } from '@prisma/client';
+import { DocumentStatus } from '@prisma/client';
 
 export const associateController = {
-  listPendingCompanies: asyncHandler(async (_req: Request, res: Response) => {
-    const companies = await associateService.listPendingCompanies();
-    sendSuccess(res, companies);
+  dashboard: asyncHandler(async (_req: Request, res: Response) => {
+    const stats = await associateService.getDashboardStats();
+    sendSuccess(res, stats, 'Dashboard stats fetched');
   }),
 
-  approveCompany: asyncHandler(async (req: Request, res: Response) => {
-    const company = await associateService.approveCompany(req.params.id);
-    sendSuccess(res, company, 'Company approved');
+  listCompanies: asyncHandler(async (_req: Request, res: Response) => {
+    const companies = await associateService.listCompanies();
+    sendSuccess(res, companies, 'Companies fetched');
   }),
 
-  rejectCompany: asyncHandler(async (req: Request, res: Response) => {
-    const { reason } = req.body;
-    const company = await associateService.rejectCompany(req.params.id, reason);
-    sendSuccess(res, company, 'Company rejected');
+  getCompanyDetail: asyncHandler(async (req: Request, res: Response) => {
+    const company = await associateService.getCompanyDetail(req.params.id);
+    sendSuccess(res, company, 'Company detail fetched');
   }),
 
-  listPendingFunding: asyncHandler(async (_req: Request, res: Response) => {
-    const list = await associateService.listPendingFunding();
-    sendSuccess(res, list);
+  listDocuments: asyncHandler(async (req: Request, res: Response) => {
+    const status = req.query.status as DocumentStatus | undefined;
+    const documents = await associateService.listDocuments(status);
+    sendSuccess(res, documents, 'Documents fetched');
   }),
 
-  approveFunding: asyncHandler(async (req: Request, res: Response) => {
-    const opportunity = await fundingService.setStatus(req.params.id, 'ACTIVE');
-    sendSuccess(res, opportunity, 'Funding opportunity approved');
+  reviewDocument: asyncHandler(async (req: Request, res: Response) => {
+    const { action, rejectionReason } = req.body;
+    const reviewerId = req.account!.id;
+    const updated = await associateService.reviewDocument(req.params.id, action, reviewerId, rejectionReason);
+    sendSuccess(res, updated, 'Document reviewed');
   }),
 
-  rejectFunding: asyncHandler(async (req: Request, res: Response) => {
-    const { rejectionReason } = req.body;
-    const opportunity = await fundingService.setStatus(req.params.id, 'REJECTED', rejectionReason);
-    sendSuccess(res, opportunity, 'Funding opportunity rejected');
+  listFunding: asyncHandler(async (_req: Request, res: Response) => {
+    const funding = await associateService.listFunding();
+    sendSuccess(res, funding, 'Funding opportunities fetched');
   }),
 
-  listPendingDocuments: asyncHandler(async (_req: Request, res: Response) => {
-    const documents = await associateService.listPendingDocuments();
-    sendSuccess(res, documents);
+  listMessages: asyncHandler(async (req: Request, res: Response) => {
+    const accountId = req.account!.id;
+    const threadWith = req.query.threadWith as string | undefined;
+    const messages = await associateService.listMessages(accountId, threadWith);
+    sendSuccess(res, messages, 'Messages fetched');
   }),
 
-  listUsers: asyncHandler(async (req: Request, res: Response) => {
-    const role = req.query.role as Role | undefined;
-    const users = await associateService.listAllUsers(role);
-    sendSuccess(res, users);
+  sendMessage: asyncHandler(async (req: Request, res: Response) => {
+    const senderId = req.account!.id;
+    const { receiverId, content, subject } = req.body;
+    const message = await associateService.sendMessage(senderId, receiverId, content, subject);
+    sendSuccess(res, message, 'Message sent', 201);
   }),
 
-  suspendUser: asyncHandler(async (req: Request, res: Response) => {
-    const account = await associateService.suspendUser(req.params.id);
-    sendSuccess(res, account, 'User suspended');
-  }),
-
-  reactivateUser: asyncHandler(async (req: Request, res: Response) => {
-    const account = await associateService.reactivateUser(req.params.id);
-    sendSuccess(res, account, 'User reactivated');
-  }),
-
-  analytics: asyncHandler(async (_req: Request, res: Response) => {
-    const analytics = await associateService.getAnalytics();
-    sendSuccess(res, analytics);
+  getProfile: asyncHandler(async (req: Request, res: Response) => {
+    const accountId = req.account!.id;
+    const profile = await associateService.getProfile(accountId);
+    sendSuccess(res, profile, 'Profile fetched');
   })
 };

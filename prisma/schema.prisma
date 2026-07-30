@@ -30,6 +30,8 @@ model Account {
   sessions                Session[]
   verifications           Verification[]
   monthlySubmissions      MonthlySubmission[]
+  sentMessages            Message[]                @relation("SentMessages")
+  receivedMessages        Message[]                @relation("ReceivedMessages")
 
   @@index([email])
   @@index([role])
@@ -74,7 +76,7 @@ model CompanyProfile {
   monthlyRevenue Decimal? @db.Decimal(18, 2)
   yearlyRevenue  Decimal? @db.Decimal(18, 2)
 
-  informationMemo Json? // stores the full Information Memo (SWOT, financials, entity overview, etc.)
+  informationMemo Json?
 
   verificationStatus VerificationStatus @default(UNVERIFIED)
   rejectionReason    String?
@@ -287,7 +289,6 @@ model FinancialAnalysis {
 
   company CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  // --- Revenue & Profitability ---
   revenue            Float?
   revenueTarget      Float?
   grossProfit        Float?
@@ -298,7 +299,6 @@ model FinancialAnalysis {
   otherIncome        Float?
   financeExpense     Float?
 
-  // --- Liquidity / Balance Sheet ---
   cashFlow           Float?
   currentRatio       Float?
   inventory          Float?
@@ -306,24 +306,20 @@ model FinancialAnalysis {
   totalAssets        Float?
   totalLiabilities   Float?
 
-  // --- Equity / Shares ---
   shareCapital    Float?
   totalShares     Int?
   sharesSold      Int?
-  sharesRemaining Int? // derived + persisted for fast reads
+  sharesRemaining Int?
 
-  // --- Funding ---
   fundingTarget Float?
   fundingRaised Float?
   investorCount Int?
 
-  // --- Derived metrics (calculated server-side, persisted for fast reads) ---
   profitMargin  Float?
   revenueGrowth Float?
 
-  // --- Period ---
   financialYear Int
-  month         Int // 1-12
+  month         Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -332,7 +328,6 @@ model FinancialAnalysis {
   @@index([companyId])
   @@index([companyId, financialYear])
 }
-
 
 model Consultation {
   id                String               @id @default(uuid())
@@ -353,18 +348,13 @@ model Consultation {
   @@index([email])
 }
 
-// ============================================================================
-// Tally Interactive Form — added from 001_create_tally_schema.sql
-// company_id -> CompanyProfile.id (uuid), submitted_by -> Account.id (uuid)
-// ============================================================================
-
 model FiscalYearConfig {
   id                    String    @id @default(uuid())
   companyId             String
-  fiscalYearLabel       String // "2024-25"
+  fiscalYearLabel       String
   startMonth            MonthEnum
-  targetGreenThreshold  Decimal   @default(1.00) @db.Decimal(5, 4) // 100%
-  targetAmberThreshold  Decimal   @default(0.90) @db.Decimal(5, 4) // 90%
+  targetGreenThreshold  Decimal   @default(1.00) @db.Decimal(5, 4)
+  targetAmberThreshold  Decimal   @default(0.90) @db.Decimal(5, 4)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -377,15 +367,15 @@ model FiscalYearConfig {
 
 model IndicatorDefinition {
   id              String              @id @default(uuid())
-  code            String              @unique // 'total_revenue', 'cogs', ...
+  code            String              @unique
   label           String
   dashboardScope  DashboardScope
   dataType        DataTypeEnum
   calculationType CalculationType     @default(SUM)
   hasTarget       Boolean             @default(false)
   hasLastYear     Boolean             @default(false)
-  isFormula       Boolean             @default(false) // true = never user-editable
-  formulaKey      String? // key into calculationService
+  isFormula       Boolean             @default(false)
+  formulaKey      String?
   allowNegative   Boolean             @default(false)
   sortOrder       Int                 @default(0)
 
@@ -395,7 +385,7 @@ model IndicatorDefinition {
 model Product {
   id                 String  @id @default(uuid())
   fiscalYearConfigId String
-  slot               Int // 1-5
+  slot               Int
   name               String?
 
   fiscalYearConfig FiscalYearConfig @relation(fields: [fiscalYearConfigId], references: [id], onDelete: Cascade)
@@ -410,7 +400,7 @@ model MonthlySubmission {
   month               MonthEnum
   status              SubmissionStatus  @default(DRAFT)
   submittedAt         DateTime?
-  submittedById       String? // FK to Account
+  submittedById       String?
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
@@ -436,6 +426,24 @@ model IndicatorValue {
 
   @@unique([monthlySubmissionId, indicatorDefinitionId, productId, valueType])
   @@index([monthlySubmissionId])
+}
+
+// --- NEW: Associate Portal messaging (no existing model to reuse) ---
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  subject    String?
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   Account @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver Account @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([receiverId, isRead])
 }
 
 enum UpdateAuthorRole {
@@ -551,8 +559,6 @@ enum ConsultationStatus {
   COMPLETED
   CANCELLED
 }
-
-// --- New enums for the Tally Interactive Form ---
 
 enum DashboardScope {
   CEO
