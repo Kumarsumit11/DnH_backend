@@ -52,8 +52,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(env.COOKIE_SECRET));
 app.use(globalRateLimiter);
 app.use('/financial-analysis', financialAnalysisRoutes);
-app.use('/admin', adminRoutes);
-app.use('/admin', verificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', verificationRoutes);
+
 app.use('/api/consultations', publicConsultationRouter);
 app.use('/api/admin/consultations', adminConsultationRouter);
 app.use('/api/admin-auth', adminAuthRoutes);
