@@ -2,9 +2,11 @@ import express from 'express';
 import { adminController } from '../controllers/admin.controller';
 
 // Plug in your existing auth/role middleware here, e.g.:
-// import { requireAuth, requireAdmin } from '../middlewares/auth.middleware';
+import { adminAuthenticate } from '../middleware/adminAuth.middleware';
 
 const router = express.Router();
+
+router.use(adminAuthenticate);
 
 // GET /admin/companies
 router.get('/companies', /* requireAuth, requireAdmin, */ adminController.listCompanies);

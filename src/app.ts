@@ -10,6 +10,8 @@ import { errorMiddleware, notFoundMiddleware } from './middleware/error.middlewa
 import financialAnalysisRoutes from './routes/financialAnalysis.routes';
 import adminRoutes from './routes/admin.routes';
 import verificationRoutes from './routes/verification.routes';
+import adminAuthRoutes from './routes/adminAuth.routes';
+import associateAdminRoutes from './routes/associateAdmin.routes';
 import { errorHandler } from './middleware/error.middleware';
 import routes from './routes';
 import { publicConsultationRouter, adminConsultationRouter } from './routes/consultation.routes';
@@ -54,6 +56,8 @@ app.use('/admin', adminRoutes);
 app.use('/admin', verificationRoutes);
 app.use('/api/consultations', publicConsultationRouter);
 app.use('/api/admin/consultations', adminConsultationRouter);
+app.use('/api/admin-auth', adminAuthRoutes);
+app.use('/api/admin/associates', associateAdminRoutes);
 app.use('/api/tally', tallyRoutes);
 
 // Register LAST, after all routes:
