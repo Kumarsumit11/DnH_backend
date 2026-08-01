@@ -14,6 +14,8 @@ router.get('/companies', /* requireAuth, requireAdmin, */ adminController.listCo
 // GET /admin/company/:companyId
 router.get('/company/:companyId', /* requireAuth, requireAdmin, */ adminController.getCompanyDetail);
 
+router.get('/investor/:investorId/investments', adminController.getInvestorInvestments);
+
 // GET /admin/company/:companyId/charts
 router.get(
   '/company/:companyId/charts',

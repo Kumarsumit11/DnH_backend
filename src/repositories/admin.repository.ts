@@ -52,6 +52,22 @@ export interface FindAllCompaniesResult {
   total: number;
 }
 
+export interface InvestorInvestmentRow {
+  id: string;
+  amount: string; // Prisma Decimal → string
+  shares: number | null;
+  status: string;
+  createdAt: Date;
+  companyId: string;
+  companyName: string;
+  opportunityTitle: string;
+}
+
+export interface InvestorInvestmentsResult {
+  investments: InvestorInvestmentRow[];
+  totalInvested: number;
+}
+
 export const adminRepository = {
   async findAllCompanies({
     skip,
@@ -101,5 +117,40 @@ export const adminRepository = {
       select: COMPANY_SELECT,
     })) as unknown as RawCompanyRow | null;
     return row ? flattenCompany(row) : null;
+  },
+
+  async findInvestorInvestments(investorId: string): Promise<InvestorInvestmentsResult> {
+    const rows = await prisma.investment.findMany({
+      where: { investorId },
+      select: {
+        id: true,
+        amount: true,
+        shares: true,
+        status: true,
+        createdAt: true,
+        fundingOpportunity: {
+          select: {
+            title: true,
+            company: { select: { id: true, companyName: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const investments: InvestorInvestmentRow[] = rows.map((r) => ({
+      id: r.id,
+      amount: r.amount.toString(),
+      shares: r.shares,
+      status: r.status,
+      createdAt: r.createdAt,
+      companyId: r.fundingOpportunity.company.id,
+      companyName: r.fundingOpportunity.company.companyName,
+      opportunityTitle: r.fundingOpportunity.title,
+    }));
+
+    const totalInvested = rows.reduce((sum, r) => sum + Number(r.amount), 0);
+
+    return { investments, totalInvested };
   },
 };
