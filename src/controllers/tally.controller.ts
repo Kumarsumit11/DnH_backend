@@ -5,7 +5,32 @@ import submissionModel from '../models/monthlySubmissionModel';
 import { recalculateMonth } from '../services/recalculateMonth.service';
 import type { RawCalcInput } from '../services/recalculateMonth.service';
 import { ValidationError, validateSubmission } from '../services/validation.service';
-import type { DashboardScope, IndicatorValueInput, IndicatorValueRow, Month, ProductInput } from '../types/tally';
+import type { DashboardScope, IndicatorDefinitionRow, IndicatorValueInput, IndicatorValueRow, Month, ProductInput } from '../types/tally';
+
+/** Wire shape sent to the frontend — matches frontend/types/tally.ts IndicatorDefinition. */
+interface IndicatorDefinitionWire {
+  code: string;
+  label: string;
+  data_type: string;
+  has_target: boolean;
+  has_last_year: boolean;
+  is_formula: boolean;
+  dashboard_scope: string;
+}
+
+/** Converts backend camelCase IndicatorDefinitionRow (from Prisma) into the
+ *  snake_case shape the frontend's types/tally.ts expects on the wire. */
+function toWireIndicatorDefinition(d: IndicatorDefinitionRow): IndicatorDefinitionWire {
+  return {
+    code: d.code,
+    label: d.label,
+    data_type: d.dataType,
+    has_target: d.hasTarget,
+    has_last_year: d.hasLastYear,
+    is_formula: d.isFormula,
+    dashboard_scope: d.dashboardScope,
+  };
+}
 
 /** GET /api/tally/config/:companyId?fiscalYear=2024-25 */
 async function getConfig(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -13,7 +38,7 @@ async function getConfig(req: Request, res: Response, next: NextFunction): Promi
     const { companyId } = req.params;
     const { fiscalYear, dashboardScope } = req.query as { fiscalYear?: string; dashboardScope?: DashboardScope };
 
-    const definitions = await indicatorModel.list(dashboardScope);
+    const definitions = (await indicatorModel.list(dashboardScope)).map(toWireIndicatorDefinition);
 
     if (!fiscalYear) {
       const configs = await fyModel.listByCompany(companyId);
