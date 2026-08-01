@@ -33,6 +33,7 @@ app.use(
         "https://www.dnhfintech.com/",
         "http://localhost:8443",
         "https://www.dnhfintech.com",
+        "https://dnhadmin.vercel.app/",
         
       ];
       
