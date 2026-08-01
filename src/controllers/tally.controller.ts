@@ -5,7 +5,7 @@ import submissionModel from '../models/monthlySubmissionModel';
 import { recalculateMonth } from '../services/recalculateMonth.service';
 import type { RawCalcInput } from '../services/recalculateMonth.service';
 import { ValidationError, validateSubmission } from '../services/validation.service';
-import type { DashboardScope, IndicatorDefinitionRow, IndicatorValueInput, IndicatorValueRow, Month, ProductInput } from '../types/tally';
+import type { DashboardScope, IndicatorDefinitionRow, IndicatorValueInput, IndicatorValueRow, Month, ProductInput, ValueType } from '../types/tally';
 
 /** Wire shape sent to the frontend — matches frontend/types/tally.ts IndicatorDefinition. */
 interface IndicatorDefinitionWire {
@@ -30,6 +30,42 @@ function toWireIndicatorDefinition(d: IndicatorDefinitionRow): IndicatorDefiniti
     is_formula: d.isFormula,
     dashboard_scope: d.dashboardScope,
   };
+}
+
+/** Shape the frontend actually sends for each value — keyed by indicatorCode,
+ *  not indicatorDefinitionId (see frontend/types/tally.ts IndicatorValueWire). */
+interface IncomingIndicatorValue {
+  indicatorCode: string;
+  productId?: string | null;
+  valueType: ValueType;
+  value: number;
+}
+
+/** Converts incoming {indicatorCode, ...} values into the
+ *  {indicatorDefinitionId, ...} shape upsertValues() actually persists,
+ *  by resolving each code against the current indicator_definitions table.
+ *  Throws if a code doesn't match any known indicator, instead of silently
+ *  sending `undefined` into Prisma. */
+async function resolveIndicatorValueInputs(
+  incoming: IncomingIndicatorValue[]
+): Promise<IndicatorValueInput[]> {
+  const allDefs = await indicatorModel.list();
+  const idByCode = new Map(allDefs.map((d) => [d.code, d.id]));
+
+  return incoming.map((v) => {
+    const indicatorDefinitionId = idByCode.get(v.indicatorCode);
+    if (!indicatorDefinitionId) {
+      throw new ValidationError([
+        { field: v.indicatorCode, message: `Unknown indicator code: ${v.indicatorCode}` },
+      ]);
+    }
+    return {
+      indicatorDefinitionId,
+      productId: v.productId ?? null,
+      valueType: v.valueType,
+      value: v.value,
+    };
+  });
 }
 
 /** GET /api/tally/config/:companyId?fiscalYear=2024-25 */
@@ -116,7 +152,7 @@ interface SaveDraftBody {
   companyId: string;
   fiscalYear: string;
   month: Month;
-  values: IndicatorValueInput[];
+  values: IncomingIndicatorValue[];
 }
 
 /** POST /api/tally/save-draft */
@@ -130,10 +166,15 @@ async function saveDraft(req: Request, res: Response, next: NextFunction): Promi
     }
 
     const submission = await submissionModel.getOrCreateDraft(config.id, month);
-    const saved = await submissionModel.upsertValues(submission.id, values);
+    const resolvedValues = await resolveIndicatorValueInputs(values);
+    const saved = await submissionModel.upsertValues(submission.id, resolvedValues);
 
     res.json({ submission, values: saved, status: 'DRAFT' });
   } catch (err) {
+    if (err instanceof ValidationError) {
+      res.status(422).json({ error: 'Validation failed', details: err.errors });
+      return;
+    }
     next(err);
   }
 }
@@ -142,7 +183,7 @@ async function saveDraft(req: Request, res: Response, next: NextFunction): Promi
 async function updateMonth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { companyId, fiscalYear, month } = req.params as { companyId: string; fiscalYear: string; month: Month };
-    const { values } = req.body as { values: IndicatorValueInput[] };
+    const { values } = req.body as { values: IncomingIndicatorValue[] };
     const config = await fyModel.getByCompany(companyId, fiscalYear);
     if (!config) {
       res.status(404).json({ error: 'Fiscal year config not found.' });
@@ -150,10 +191,15 @@ async function updateMonth(req: Request, res: Response, next: NextFunction): Pro
     }
 
     const submission = await submissionModel.getOrCreateDraft(config.id, month);
-    const saved = await submissionModel.upsertValues(submission.id, values);
+    const resolvedValues = await resolveIndicatorValueInputs(values);
+    const saved = await submissionModel.upsertValues(submission.id, resolvedValues);
 
     res.json({ submission, values: saved });
   } catch (err) {
+    if (err instanceof ValidationError) {
+      res.status(422).json({ error: 'Validation failed', details: err.errors });
+      return;
+    }
     next(err);
   }
 }
