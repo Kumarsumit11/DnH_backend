@@ -27,11 +27,11 @@ export async function getOrCreateDraft(
   month: Month
 ): Promise<MonthlySubmissionRow> {
   const existing = await getSubmission(fiscalYearConfigId, month);
-  
+
   if (existing) {
     return existing;
   }
-  
+
   return prisma.monthlySubmission.create({
     data: {
       fiscalYearConfigId,
@@ -65,44 +65,65 @@ export async function getValues(
 }
 
 /**
- * Upsert a batch of indicator values for a submission inside a transaction.
+ * Upsert a batch of indicator values for a submission.
+ *
+ * Uses the array form of $transaction (a list of prepared queries) rather
+ * than the callback form with sequential awaited findFirst/create/update
+ * calls per value. The callback form holds an interactive transaction open
+ * across N round-trips to the DB, which on a slow/pooled connection (Render)
+ * can exceed Prisma's default 5s transaction timeout and fail with
+ * "Transaction not found" partway through. The array form sends every
+ * upsert as one batched request, so it can't time out mid-loop the same way.
  */
 export async function upsertValues(
   monthlySubmissionId: string,
   values: IndicatorValueInput[]
 ): Promise<IndicatorValueRow[]> {
-  await prisma.$transaction(async (tx) => {
-    for (const v of values) {
-      const existing = await tx.indicatorValue.findFirst({
-        where: {
-          monthlySubmissionId,
-          indicatorDefinitionId: v.indicatorDefinitionId,
-          productId: v.productId ?? null,
-          valueType: v.valueType,
-        },
-      });
+  if (values.length > 0) {
+    // Prisma can't do a compound-unique upsert when one of the unique
+    // columns (productId) is nullable — SQL treats NULL != NULL, so
+    // Prisma doesn't generate a where-unique type that accepts null there.
+    // Instead: fetch existing rows for this submission once, decide
+    // create-vs-update per value in app code, then batch everything into
+    // one $transaction array (still a single round trip, still no
+    // interactive-transaction timeout risk).
+    const existing = await prisma.indicatorValue.findMany({
+      where: { monthlySubmissionId },
+      select: { id: true, indicatorDefinitionId: true, productId: true, valueType: true },
+    });
 
-      if (existing) {
-        await tx.indicatorValue.update({
-          where: { id: existing.id },
+    const keyOf = (indicatorDefinitionId: string, productId: string | null, valueType: string) =>
+      `${indicatorDefinitionId}|${productId ?? ''}|${valueType}`;
+
+    const existingByKey = new Map(
+      existing.map((row) => [keyOf(row.indicatorDefinitionId, row.productId, row.valueType), row.id])
+    );
+
+    const ops = values.map((v) => {
+      const productId: string | null = v.productId ?? null;
+      const key = keyOf(v.indicatorDefinitionId, productId, v.valueType);
+      const existingId = existingByKey.get(key);
+
+      if (existingId) {
+        return prisma.indicatorValue.update({
+          where: { id: existingId },
           data: { value: v.value },
         });
-      } else {
-        await tx.indicatorValue.create({
-          data: {
-            monthlySubmissionId,
-            indicatorDefinitionId: v.indicatorDefinitionId,
-            productId: v.productId ?? null,
-            valueType: v.valueType,
-            value: v.value,
-          },
-        });
       }
-    }
-  });
 
-  // updatedAt is automatically handled by Prisma's @updatedAt attribute
-  // No need to manually update it
+      return prisma.indicatorValue.create({
+        data: {
+          monthlySubmissionId,
+          indicatorDefinitionId: v.indicatorDefinitionId,
+          productId,
+          valueType: v.valueType,
+          value: v.value,
+        },
+      });
+    });
+
+    await prisma.$transaction(ops);
+  }
 
   return getValues(monthlySubmissionId);
 }
