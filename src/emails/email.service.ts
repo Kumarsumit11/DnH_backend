@@ -57,7 +57,7 @@ sendWelcomeEmail: (to: string, name: string) =>
         <ol>
             <li><strong>Initial Review & Screening:</strong> Our investment banking team is currently evaluating your submission against relevant fund criteria and structuring parameters.</li>
             <li><strong>Confidential Discussion & NDA:</strong> We will reach out within <strong>24 to 48 business hours</strong> to schedule an initial consultation and execute a Non-Disclosure Agreement (NDA) to safeguard your sensitive business data.</li>
-            <li><strong>Strategic Alignment & Investor Matching:</strong> Once assessed, we leverage our global network of <strong>500+ institutional investors</strong> to align your capital needs with the right institutional partners.</li>
+            <li><strong>Strategic Alignment and Investor Matching:</strong> Once assessed, we leverage our global network of <strong>500+ institutional investors</strong> to align your capital needs with the right institutional partners.</li>
         </ol>
         
         <p><strong>At a Glance: The D&H Advantage</strong></p>
