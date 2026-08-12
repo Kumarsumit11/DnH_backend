@@ -44,7 +44,7 @@ export const emailService = {
 
 sendWelcomeEmail: (to: string, name: string) =>
     send(to, 'Welcome to D&H Fintech -- Next Steps for Your Funding Request', `
-        <p>Dear ${name},</p>
+        <p>Dear client ${name},</p>
         
         <p>Thank you for registering your funding request with <strong>D&H Fintech</strong>. We are pleased to welcome you to our client network.</p>
         
