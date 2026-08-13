@@ -330,33 +330,33 @@ model FinancialAnalysis {
 }
 
 model Consultation {
-  id                String               @id @default(uuid())
-  fullName          String
-  email             String
-  phone             String
-  company           String?
-  consultationType  ConsultationType
-  preferredDate     DateTime
-  preferredTime     String
-  notes             String?
-  status            ConsultationStatus   @default(PENDING)
-  actionToken       String?              @unique
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  id               String             @id @default(uuid())
+  fullName         String
+  email            String
+  phone            String
+  company          String?
+  consultationType ConsultationType
+  preferredDate    DateTime
+  preferredTime    String
+  notes            String?
+  status           ConsultationStatus @default(PENDING)
+  actionToken      String?            @unique
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@index([status])
   @@index([email])
 }
 
 model FiscalYearConfig {
-  id                    String    @id @default(uuid())
-  companyId             String
-  fiscalYearLabel       String
-  startMonth            MonthEnum
-  targetGreenThreshold  Decimal   @default(1.00) @db.Decimal(5, 4)
-  targetAmberThreshold  Decimal   @default(0.90) @db.Decimal(5, 4)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                   String    @id @default(uuid())
+  companyId            String
+  fiscalYearLabel      String
+  startMonth           MonthEnum
+  targetGreenThreshold Decimal   @default(1.00) @db.Decimal(5, 4)
+  targetAmberThreshold Decimal   @default(0.90) @db.Decimal(5, 4)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   company            CompanyProfile      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   products           Product[]
@@ -366,18 +366,18 @@ model FiscalYearConfig {
 }
 
 model IndicatorDefinition {
-  id              String              @id @default(uuid())
-  code            String              @unique
+  id              String          @id @default(uuid())
+  code            String          @unique
   label           String
   dashboardScope  DashboardScope
   dataType        DataTypeEnum
-  calculationType CalculationType     @default(SUM)
-  hasTarget       Boolean             @default(false)
-  hasLastYear     Boolean             @default(false)
-  isFormula       Boolean             @default(false)
+  calculationType CalculationType @default(SUM)
+  hasTarget       Boolean         @default(false)
+  hasLastYear     Boolean         @default(false)
+  isFormula       Boolean         @default(false)
   formulaKey      String?
-  allowNegative   Boolean             @default(false)
-  sortOrder       Int                 @default(0)
+  allowNegative   Boolean         @default(false)
+  sortOrder       Int             @default(0)
 
   indicatorValues IndicatorValue[]
 }
@@ -395,14 +395,14 @@ model Product {
 }
 
 model MonthlySubmission {
-  id                  String            @id @default(uuid())
-  fiscalYearConfigId  String
-  month               MonthEnum
-  status              SubmissionStatus  @default(DRAFT)
-  submittedAt         DateTime?
-  submittedById       String?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  id                 String           @id @default(uuid())
+  fiscalYearConfigId String
+  month              MonthEnum
+  status             SubmissionStatus @default(DRAFT)
+  submittedAt        DateTime?
+  submittedById      String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   fiscalYearConfig FiscalYearConfig @relation(fields: [fiscalYearConfigId], references: [id], onDelete: Cascade)
   submittedBy      Account?         @relation(fields: [submittedById], references: [id])
@@ -413,12 +413,12 @@ model MonthlySubmission {
 }
 
 model IndicatorValue {
-  id                     String    @id @default(uuid())
-  monthlySubmissionId    String
-  indicatorDefinitionId  String
-  productId              String?
-  valueType              ValueType
-  value                  Decimal   @db.Decimal(18, 4)
+  id                    String    @id @default(uuid())
+  monthlySubmissionId   String
+  indicatorDefinitionId String
+  productId             String?
+  valueType             ValueType
+  value                 Decimal   @db.Decimal(18, 4)
 
   monthlySubmission   MonthlySubmission   @relation(fields: [monthlySubmissionId], references: [id], onDelete: Cascade)
   indicatorDefinition IndicatorDefinition @relation(fields: [indicatorDefinitionId], references: [id])
@@ -508,6 +508,9 @@ enum DocumentType {
   FINANCIAL_STATEMENT
   LOGO
   AVATAR
+  INFORMATION_MEMO
+  TALLY_REPORT
+  TALLY_EXCEL
   OTHER
 }
 

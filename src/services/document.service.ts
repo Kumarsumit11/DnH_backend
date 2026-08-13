@@ -11,6 +11,9 @@ const TYPE_TO_BUCKET: Record<DocumentType, string> = {
   FINANCIAL_STATEMENT: 'company-documents',
   LOGO: 'logos',
   AVATAR: 'avatars',
+  INFORMATION_MEMO: 'company-documents',
+  TALLY_REPORT: 'company-documents',
+  TALLY_EXCEL: 'company-documents',
   OTHER: 'investor-documents'
 };
 

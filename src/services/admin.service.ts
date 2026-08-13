@@ -108,13 +108,14 @@ export const adminService = {
 
     return {
       company: {
-        id: company.id,
-        companyName: company.companyName,
-        email: company.email,
-        verificationStatus: company.verificationStatus,
-        createdAt: company.createdAt,
-        informationMemo: company.informationMemo,
-      },
+  id: company.id,
+  companyName: company.companyName,
+  email: company.email,
+  verificationStatus: company.verificationStatus,
+  createdAt: company.createdAt,
+  informationMemo: company.informationMemo,
+  documents: company.documents,
+},
       financial,
       fundingStatus: financial ? fundingStatus(financial.funding.fundingProgressPercent) : 'NO_DATA',
     };

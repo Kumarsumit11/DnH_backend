@@ -144,6 +144,19 @@ export interface CompanySummary {
   rejectionReason: string | null;
   createdAt: Date;
   informationMemo?: unknown;
+  documents: Array<{
+  id: string;
+  type: string;
+  status: string;
+  fileName: string;
+  fileUrl: string;
+  mimeType: string;
+  sizeBytes: number;
+  rejectionReason: string | null;
+  reviewedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}>;
 }
 
 /** Frontend-ready shape produced by toFrontendShape(). */
@@ -241,7 +254,21 @@ export interface AdminCompanyDetailResult {
     email: string;
     verificationStatus: string;
     createdAt: Date;
-        informationMemo?: unknown; // ← new
+    informationMemo?: unknown;
+
+    documents: Array<{
+      id: string;
+      type: string;
+      status: string;
+      fileName: string;
+      fileUrl: string;
+      mimeType: string;
+      sizeBytes: number;
+      rejectionReason: string | null;
+      reviewedBy: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>;
   };
   financial: FinancialAnalysisFrontendShape | null;
   fundingStatus: FundingStatus;

@@ -2,11 +2,15 @@ import { prisma } from './financialAnalysis.repository';
 import type { CompanySummary } from '../types/financialAnalysis.types';
 
 /**
- * FIXED to match your real schema.prisma: `CompanyProfile` has no `email`
- * column of its own — email lives on the related `Account`. The original
- * select (`{ id, companyName, email, verificationStatus, createdAt }`)
- * would throw a Prisma "Unknown field `email`" error at runtime. We select
- * the account relation instead and flatten it below.
+ * Company fields used by the Admin APIs.
+ *
+ * Email belongs to the related Account, not CompanyProfile.
+ *
+ * Documents are loaded from Account.documents and limited to the
+ * two document types currently required by the Admin company view:
+ *
+ * - INFORMATION_MEMO
+ * - TALLY_REPORT
  */
 const COMPANY_SELECT = {
   id: true,
@@ -15,7 +19,38 @@ const COMPANY_SELECT = {
   rejectionReason: true,
   createdAt: true,
   informationMemo: true,
-  account: { select: { email: true } },
+
+  account: {
+    select: {
+      email: true,
+
+      documents: {
+        where: {
+          type: {
+            in: ['INFORMATION_MEMO', 'TALLY_REPORT'] as any,
+          },
+        },
+
+        orderBy: {
+          createdAt: 'desc',
+        },
+
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          fileName: true,
+          fileUrl: true,
+          mimeType: true,
+          sizeBytes: true,
+          rejectionReason: true,
+          reviewedBy: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+  },
 } as const;
 
 type RawCompanyRow = {
@@ -25,7 +60,24 @@ type RawCompanyRow = {
   rejectionReason: string | null;
   createdAt: Date;
   informationMemo: unknown;
-  account: { email: string } | null;
+
+  account: {
+    email: string;
+
+    documents: Array<{
+      id: string;
+      type: string;
+      status: string;
+      fileName: string;
+      fileUrl: string;
+      mimeType: string;
+      sizeBytes: number;
+      rejectionReason: string | null;
+      reviewedBy: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>;
+  } | null;
 };
 
 function flattenCompany(row: RawCompanyRow): CompanySummary {
@@ -37,6 +89,8 @@ function flattenCompany(row: RawCompanyRow): CompanySummary {
     rejectionReason: row.rejectionReason,
     createdAt: row.createdAt,
     informationMemo: row.informationMemo,
+
+    documents: row.account?.documents ?? [],
   };
 }
 
@@ -54,7 +108,7 @@ export interface FindAllCompaniesResult {
 
 export interface InvestorInvestmentRow {
   id: string;
-  amount: string; // Prisma Decimal → string
+  amount: string;
   shares: number | null;
   status: string;
   createdAt: Date;
@@ -75,82 +129,125 @@ export const adminRepository = {
     verificationStatus,
     search,
   }: FindAllCompaniesParams): Promise<FindAllCompaniesResult> {
-    const where: any = {
-      ...(verificationStatus ? { verificationStatus } : {}),
-      ...(search
-        ? {
-            OR: [
-              { companyName: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    };
-
-    // Note: search now matches company name OR the related account's email.
     const searchWhere: any = search
       ? {
           OR: [
-            { companyName: { contains: search, mode: 'insensitive' as const } },
-            { account: { email: { contains: search, mode: 'insensitive' as const } } },
+            {
+              companyName: {
+                contains: search,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              account: {
+                email: {
+                  contains: search,
+                  mode: 'insensitive' as const,
+                },
+              },
+            },
           ],
         }
       : {};
 
+    const where: any = {
+      ...(verificationStatus ? { verificationStatus } : {}),
+      ...searchWhere,
+    };
+
     const [rows, total] = await Promise.all([
       prisma.companyProfile.findMany({
-        where: { ...where, ...searchWhere },
+        where,
         select: COMPANY_SELECT,
         skip,
         take,
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: 'desc',
+        },
       }) as unknown as Promise<RawCompanyRow[]>,
-      prisma.companyProfile.count({ where: { ...where, ...searchWhere } }) as unknown as Promise<number>,
+
+      prisma.companyProfile.count({
+        where,
+      }) as unknown as Promise<number>,
     ]);
 
-    return { companies: rows.map(flattenCompany), total };
+    return {
+      companies: rows.map(flattenCompany),
+      total,
+    };
   },
 
-  async findCompanyById(companyId: string): Promise<CompanySummary | null> {
-    const row = (await prisma.companyProfile.findUnique({
-      where: { id: companyId },
-      select: COMPANY_SELECT,
-    })) as unknown as RawCompanyRow | null;
+  async findCompanyById(
+    companyId: string
+  ): Promise<CompanySummary | null> {
+    const row =
+      (await prisma.companyProfile.findUnique({
+        where: {
+          id: companyId,
+        },
+
+        select: COMPANY_SELECT,
+      })) as unknown as RawCompanyRow | null;
+
     return row ? flattenCompany(row) : null;
   },
 
-  async findInvestorInvestments(investorId: string): Promise<InvestorInvestmentsResult> {
+  async findInvestorInvestments(
+    investorId: string
+  ): Promise<InvestorInvestmentsResult> {
     const rows = await prisma.investment.findMany({
-      where: { investorId },
+      where: {
+        investorId,
+      },
+
       select: {
         id: true,
         amount: true,
         shares: true,
         status: true,
         createdAt: true,
+
         fundingOpportunity: {
           select: {
             title: true,
-            company: { select: { id: true, companyName: true } },
+
+            company: {
+              select: {
+                id: true,
+                companyName: true,
+              },
+            },
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
-    const investments: InvestorInvestmentRow[] = rows.map((r) => ({
-      id: r.id,
-      amount: r.amount.toString(),
-      shares: r.shares,
-      status: r.status,
-      createdAt: r.createdAt,
-      companyId: r.fundingOpportunity.company.id,
-      companyName: r.fundingOpportunity.company.companyName,
-      opportunityTitle: r.fundingOpportunity.title,
-    }));
+    const investments: InvestorInvestmentRow[] =
+      rows.map((r) => ({
+        id: r.id,
+        amount: r.amount.toString(),
+        shares: r.shares,
+        status: r.status,
+        createdAt: r.createdAt,
+        companyId: r.fundingOpportunity.company.id,
+        companyName:
+          r.fundingOpportunity.company.companyName,
+        opportunityTitle:
+          r.fundingOpportunity.title,
+      }));
 
-    const totalInvested = rows.reduce((sum, r) => sum + Number(r.amount), 0);
+    const totalInvested = rows.reduce(
+      (sum, r) => sum + Number(r.amount),
+      0
+    );
 
-    return { investments, totalInvested };
+    return {
+      investments,
+      totalInvested,
+    };
   },
 };
