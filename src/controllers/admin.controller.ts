@@ -6,6 +6,7 @@ import {
   chartsQuerySchema,
   adminCompaniesQuerySchema,
 } from '../validators/financialAnalysis.validator';
+import { companyUpdateService } from '../services/company-update.service';
 import { z } from 'zod';
 
 const investorIdParamSchema = z.object({ investorId: z.string().uuid() });
@@ -39,6 +40,16 @@ export const adminController = {
       const { companyId } = companyIdParamSchema.parse(req.params);
       const { months } = chartsQuerySchema.parse(req.query);
       const result = await adminService.getCompanyCharts(companyId, months);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }) as RequestHandler,
+
+   getCompanyUpdates: (async (req, res, next) => {
+    try {
+      const { companyId } = companyIdParamSchema.parse(req.params);
+      const result = await companyUpdateService.listForCompany(companyId);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);

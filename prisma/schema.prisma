@@ -94,6 +94,23 @@ model CompanyProfile {
   @@index([industry])
 }
 
+model CompanyUpdate {
+  id         String           @id @default(uuid())
+  companyId  String
+  authorRole UpdateAuthorRole
+  authorName String
+  title      String
+  content    String
+  category   UpdateCategory   @default(GENERAL)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  company    CompanyProfile   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([companyId, createdAt])
+}
+
 model AssociatePartnerProfile {
   id         String   @id @default(uuid())
   accountId  String   @unique
@@ -266,23 +283,6 @@ model Verification {
   @@index([accountId, purpose])
 }
 
-model CompanyUpdate {
-  id         String           @id @default(uuid())
-  companyId  String
-  authorRole UpdateAuthorRole
-  authorName String
-  title      String
-  content    String
-  category   UpdateCategory   @default(GENERAL)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-
-  company CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@index([companyId])
-  @@index([companyId, createdAt])
-}
-
 model FinancialAnalysis {
   id        String @id @default(uuid())
   companyId String
@@ -428,7 +428,6 @@ model IndicatorValue {
   @@index([monthlySubmissionId])
 }
 
-// --- NEW: Associate Portal messaging (no existing model to reuse) ---
 model Message {
   id         String   @id @default(uuid())
   senderId   String
@@ -446,18 +445,7 @@ model Message {
   @@index([receiverId, isRead])
 }
 
-enum UpdateAuthorRole {
-  CEO
-  CFO
-}
-
-enum UpdateCategory {
-  GENERAL
-  FINANCIAL
-  PRODUCT
-  MILESTONE
-  RISK
-}
+// ─── Enums ─────────────────────────────────────────────────────────────────────
 
 enum Role {
   INVESTOR
@@ -592,6 +580,19 @@ enum ValueType {
 enum SubmissionStatus {
   DRAFT
   SUBMITTED
+}
+
+enum UpdateAuthorRole {
+  CEO
+  CFO
+}
+
+enum UpdateCategory {
+  GENERAL
+  FINANCIAL
+  PRODUCT
+  MILESTONE
+  RISK
 }
 
 enum MonthEnum {
