@@ -58,9 +58,10 @@ model InvestorProfile {
 }
 
 model CompanyProfile {
-  id                 String  @id @default(uuid())
-  accountId          String  @unique
+  id                 String       @id @default(uuid())
+  accountId          String       @unique
   companyName        String
+  companyType        CompanyType?
   registrationNumber String?
   industry           String?
   description        String?
@@ -105,7 +106,7 @@ model CompanyUpdate {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
-  company    CompanyProfile   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([companyId, createdAt])
@@ -465,6 +466,15 @@ enum VerificationStatus {
   PENDING
   VERIFIED
   REJECTED
+}
+
+enum CompanyType {
+  REAL_ESTATE
+  TECHNOLOGY
+  MANUFACTURING
+  HEALTHCARE
+  FINANCE
+  OTHER
 }
 
 enum FundingStatus {

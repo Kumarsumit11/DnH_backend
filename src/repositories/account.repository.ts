@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma';
-import { Role, AccountStatus } from '@prisma/client';
+import { Role, AccountStatus, CompanyType } from '@prisma/client';
 
 export const accountRepository = {
   findByEmail: (email: string) => prisma.account.findUnique({ where: { email } }),
@@ -22,14 +22,27 @@ export const accountRepository = {
       include: { investorProfile: true }
     }),
 
-  createCompany: (email: string, passwordHash: string, companyName: string, phone?: string, address?: string) =>
+  createCompany: (
+    email: string,
+    passwordHash: string,
+    companyName: string,
+    phone?: string,
+    address?: string,
+    companyType?: CompanyType
+  ) =>
     prisma.account.create({
       data: {
         email,
         passwordHash,
         phone,
         role: Role.COMPANY,
-        companyProfile: { create: { companyName, address } }
+        companyProfile: {
+          create: {
+            companyName,
+            address,
+            companyType
+          }
+        }
       },
       include: { companyProfile: true }
     }),

@@ -21,13 +21,31 @@ export const authController = {
   }),
 
   registerCompany: asyncHandler(async (req: Request, res: Response) => {
-    const { email, password, companyName, phone, address } = req.body;
-    const result = await authService.registerCompany(email, password, companyName, phone, address);
-    sendSuccess(res, result, 'Registration successful. Please verify your email.', 201);
+    const {
+      email,
+      password,
+      companyName,
+      phone,
+      address,
+      companyType
+    } = req.body;
+
+    const result = await authService.registerCompany(
+      email,
+      password,
+      companyName,
+      phone,
+      address,
+      companyType
+    );
+
+    sendSuccess(
+      res,
+      result,
+      'Registration successful. Please verify your email.',
+      201
+    );
   }),
-
-   
-
 
   verifyEmail: asyncHandler(async (req: Request, res: Response) => {
     const { email, otp } = req.body;

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-
 export const registerInvestorSchema = z.object({
   body: z.object({
     email: z.string().email(),
@@ -16,6 +15,14 @@ export const registerCompanySchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
     companyName: z.string().min(2),
+    companyType: z.enum([
+      "REAL_ESTATE",
+      "TECHNOLOGY",
+      "MANUFACTURING",
+      "HEALTHCARE",
+      "FINANCE",
+      "OTHER"
+    ]),
     phone: z.string().min(7).optional(),
     address: z.string().optional()
   })
@@ -78,6 +85,3 @@ export const completeProfileSchema = z.object({
     address: z.string().optional(),
   }),
 });
-
-
-

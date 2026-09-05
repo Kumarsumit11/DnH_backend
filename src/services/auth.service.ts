@@ -7,7 +7,7 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/
 import { emailService } from '../emails/email.service';
 import { AppError } from '../errors/AppError';
 import { ErrorCode } from '../constants/errorCodes';
-import { VerificationPurpose, AccountStatus } from '@prisma/client';
+import { VerificationPurpose, AccountStatus, CompanyType } from '@prisma/client';
 import { Role } from '../constants/roles';
 import { auditRepository } from '../repositories/audit.repository';
 
@@ -50,12 +50,28 @@ export const authService = {
     return { id: account.id, email: account.email, role: account.role };
   },
 
-  async registerCompany(email: string, password: string, companyName: string, phone?: string, address?: string) {
+  async registerCompany(
+    email: string,
+    password: string,
+    companyName: string,
+    phone?: string,
+    address?: string,
+    companyType?: CompanyType
+  ) {
     const existing = await accountRepository.findByEmail(email);
     if (existing) throw AppError.conflict('An account with this email already exists', ErrorCode.CONFLICT);
 
     const passwordHash = await hashPassword(password);
-    const account = await accountRepository.createCompany(email, passwordHash, companyName, phone, address);
+
+    const account = await accountRepository.createCompany(
+      email,
+      passwordHash,
+      companyName,
+      phone,
+      address,
+      companyType
+    );
+
     await createAndSendOtp(account.id, email, VerificationPurpose.EMAIL_VERIFICATION);
     await auditRepository.log('CREATE', 'Account', account.id, account.id, { role: 'COMPANY' });
 
